@@ -1,4 +1,4 @@
-name: Plugin Nightly Pipeline
+name: Operator Nightly Pipeline
 
 on:
   schedule:
