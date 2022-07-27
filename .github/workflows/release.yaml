@@ -187,7 +187,9 @@ jobs:
 
         echo "Branch version: ${{ steps.branch_version.outputs.branch_version }}"
 
-        echo "Quay tag": ${{ steps.quay_tag.outputs.quay_tag }}
+        echo "Plugin Quay tag": ${{ steps.quay_tag.outputs.plugin_quay_tag }}
+
+        echo "Operator Quay tag": ${{ steps.quay_tag.outputs.operator_quay_tag }}
 
   release:
     name: Release
