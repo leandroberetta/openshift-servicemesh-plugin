@@ -87,18 +87,17 @@ jobs:
     - name: Determine release type
       id: release_type
       run: |
-        echo ${{ github.ref_name }}
-        if [[ "${{ github.ref_name }}" == "main" ]];
+        if [ -z ${{ github.event.inputs.release_type }} ];
         then
-          SPRINT_RELEASE=$(python minor.py)
-          if [[ $SPRINT_RELEASE == "1" ]] || [[ "${{github.event_name}}" != "schedule" ]]
+          DO_RELEASE=$(python minor.py)
+          if [[ $DO_RELEASE == "1" ]]
           then
             echo "release_type=minor" >> $GITHUB_ENV
           else
             echo "release_type=skip" >> $GITHUB_ENV
           fi
         else
-          echo "release_type=patch" >> $GITHUB_ENV
+          echo "release_type=${{ github.event.inputs.release_type }}" >> $GITHUB_ENV
         fi
 
     - name: Determine release version
