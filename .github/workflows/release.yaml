@@ -280,10 +280,10 @@ jobs:
         git checkout -b update-$BRANCH_VERSION-$GITHUB_RUN_ID
 
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
-        jq -r ".version |= \"${RELEASE_VERSION:1}\"" frontend/package.json > frontend/package.json.tmp
-        mv frontend/package.json.tmp frontend/package.json
+        jq -r ".version |= \"${RELEASE_VERSION:1}\"" plugin/package.json > plugin/package.json.tmp
+        mv plugin/package.json.tmp plugin/package.json
 
-        git add Makefile frontend/package.json
+        git add Makefile plugin/package.json
         git commit -m "Prepare for next version"
 
         git push origin update-$BRANCH_VERSION-$GITHUB_RUN_ID
