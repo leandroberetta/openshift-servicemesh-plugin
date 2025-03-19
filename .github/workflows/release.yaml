@@ -259,21 +259,12 @@ jobs:
       run: |
         gh release create $RELEASE_VERSION -t "OpenShift Service Mesh Console $RELEASE_VERSION"
 
-    - name: Check if version branch exists
-      if: ${{ needs.initialize.outputs.release_type == 'patch' }}
-      run: |
-        if git ls-remote --exit-code --heads origin "$BRANCH_VERSION"; then
-          echo "EXISTS=true" >> $GITHUB_ENV
-        else
-          echo "EXISTS=false" >> $GITHUB_ENV
-        fi
-
     - name: Create version branch
-      if: ${{ env.EXISTS == 'false' && needs.initialize.outputs.release_type == 'patch' }}
+      if: ${{ needs.initialize.outputs.release_type == 'minor' || needs.initialize.outputs.release_type == 'major' }}
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
     - name: Create PR to update version branch
-      if: ${{ env.EXISTS == 'true' && needs.initialize.outputs.release_type == 'patch' }}
+      if: ${{ needs.initialize.outputs.release_type == 'patch' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
