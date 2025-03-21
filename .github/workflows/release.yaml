@@ -212,6 +212,7 @@ jobs:
       RELEASE_BRANCH: ${{ github.ref_name }}
       PLUGIN_QUAY_TAG: ${{ needs.initialize.outputs.plugin_quay_tag }}
       KIALI_SRC_CODE_VERSION: ${{ needs.initialize.outputs.kiali_src_code_version }}
+      RELEASE_TYPE: ${{ env.release_type }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -263,34 +264,17 @@ jobs:
       if: ${{ needs.initialize.outputs.release_type == 'minor' || needs.initialize.outputs.release_type == 'major' }}
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
-    - name: Create PR to update version branch
-      if: ${{ needs.initialize.outputs.release_type == 'patch' }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git checkout -b update-$BRANCH_VERSION-$GITHUB_RUN_ID
-
-        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
-        jq -r ".version |= \"${RELEASE_VERSION:1}\"" plugin/package.json > plugin/package.json.tmp
-        mv plugin/package.json.tmp plugin/package.json
-
-        git add Makefile plugin/package.json
-        git commit -m "Prepare for next version"
-
-        git push origin update-$BRANCH_VERSION-$GITHUB_RUN_ID
-
-        gh pr create -t "Update $BRANCH_VERSION" \
-                     -b "Automated PR to update $BRANCH_VERSION" \
-                     -B "$BRANCH_VERSION" \
-                     -H update-$BRANCH_VERSION-$GITHUB_RUN_ID
-
     - name: Create a PR to prepare for next version
       env:
-        BUILD_TAG: kiali-release-${{ github.run_number }}-main
+        BUILD_TAG: kiali-release-${{ github.run_number }}-$BRANCH_VERSION
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ needs.initialize.outputs.release_type == 'minor' || needs.initialize.outputs.release_type == 'major' }}
       run: |
-        hack/update-version-string.sh "${NEXT_VERSION}-SNAPSHOT"
+        if [[ $RELEASE_TYPE == "patch" ]]; then
+          REPLACE_VERSION=$RELEASE_VERSION
+        elif [[ $RELEASE_TYPE == "major" || $RELEASE_TYPE == "minor" ]]; then
+          REPLACE_VERSION=$NEXT_VERSION
+
+        hack/update-version-string.sh "${REPLACE_VERSION}-SNAPSHOT"
 
         git add Makefile plugin/package.json plugin/plugin-metadata.ts
 
@@ -298,4 +282,4 @@ jobs:
 
         git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
 
-        gh pr create -t "Prepare for next version" -b "Please, merge to update version numbers and prepare for release $NEXT_VERSION." -H $BUILD_TAG -B $RELEASE_BRANCH
+        gh pr create -t "Prepare for next version" -b "Please, merge to update version numbers." -H $BUILD_TAG -B $RELEASE_BRANCH
